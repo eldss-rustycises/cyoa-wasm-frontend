@@ -1,10 +1,9 @@
 [package]
 version = "0.1.0"
-name = "app_name"
+name = "cyoa-wasm-frontend"
 repository = "https://github.com/seed-rs/seed-quickstart"
-authors = ["Your Name <email@address.com>"]
-description = "App Description"
-categories = ["category"]
+authors = ["Evan <evanldouglass@gmail.com>"]
+description = "Sample WASM Frontend Project"
 license = "MIT"
 readme = "./README.md"
 edition = "2018"
