@@ -3,7 +3,9 @@
 // but some rules are too "annoying" or are not applicable for your case.)
 #![allow(clippy::wildcard_imports)]
 
-use seed::{prelude::*, *};
+use seed::{browser::fetch, prelude::*, *};
+
+pub mod types;
 
 // ------ ------
 //     Init
@@ -19,23 +21,56 @@ fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 
 // `Model` describes our app state.
-type Model = i32;
+type Model = types::StoryArc;
+
+impl Default for Model {
+    fn default() -> Self {
+        Self {
+            title: "".to_owned(),
+            story: vec![],
+            options: vec![],
+        }
+    }
+}
 
 // ------ ------
 //    Update
 // ------ ------
 
-// (Remove the line below once any of your `Msg` variants doesn't implement `Copy`.)
-#[derive(Copy, Clone)]
+async fn fetch_story_arc(arc: String) -> Result<Model, fetch::FetchError> {
+    let url = format!("http://localhost:8085/arc/{}", arc);
+    // If status is good, returns the result of parsing the json body into Model
+    fetch::fetch(url).await?.check_status()?.json().await
+}
+
 // `Msg` describes the different events you can modify state with.
 enum Msg {
-    Increment,
+    FetchArc(String),
+    FetchArcComplete(Model),
+    Error,
 }
 
 // `update` describes how to handle each `Msg`.
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Increment => *model += 1,
+        Msg::FetchArc(arc) => {
+            orders.perform_cmd(async {
+                match fetch_story_arc(arc).await {
+                    Ok(data) => Msg::FetchArcComplete(data),
+                    Err(err) => {
+                        error!("problem fetching data: {:?}", err);
+                        orders.skip();
+                        Msg::Error
+                    }
+                }
+            });
+        }
+        Msg::FetchArcComplete(mdl) => {
+            model.title = mdl.title;
+            model.story = mdl.story;
+            model.options = mdl.options;
+        }
+        Msg::Error => {}
     }
 }
 
@@ -47,10 +82,47 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 #[allow(clippy::trivially_copy_pass_by_ref)]
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
-    div![
-        "This is a counter!: ",
-        C!["counter"],
-        button![model, ev(Ev::Click, |_| Msg::Increment),],
+    div![header(),]
+}
+
+fn header() -> Node<Msg> {
+    let base_style = style! {
+        St::Position => "fixed",
+        St::Display => "flex",
+        St::JustifyContent => "center",
+        St::Left => 0,
+        St::Top => 0,
+        St::Width => "100%",
+        St::Height => "56px",
+        St::Padding => 0,
+        St::Background => "#007d9c",
+        St::BoxShadow => "0 0 5px rgba(0, 0, 0, 0.5)",
+        St::ZIndex => 50,
+    };
+
+    let heading_link_style = style! {
+        St::Margin => 0,
+        St::Padding => "0 15px",
+        St::FontSize => "24px",
+        St::LineHeight => "56px",
+        St::FontWeight => 400,
+        St::Color => "#FFF",
+    };
+
+    let link_style = style! {
+        St::TextDecoration => "none",
+    };
+
+    header![
+        &base_style,
+        h1![
+            &heading_link_style,
+            a![
+                &link_style,
+                attrs! {At::Href => "https://courses.calhoun.io/", At::Target => "_"},
+                "Gophercises - Choose Your Own Adventure (Except Rust)"
+            ],
+        ],
     ]
 }
 

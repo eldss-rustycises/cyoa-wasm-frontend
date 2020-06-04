@@ -1,3 +1,9 @@
+This project is not currently working. I keep getting circular errors that do not appear to be in line with the way this framework is supposed to work. The most likely issue is that I'm doing something wrong.
+
+In general, I find this approach to creating a webpage interesting, but very impractical. It will be worth exploring other frameworks and trying something similar, but for now I'll be sticking with good ol' HTML/CSS/JS.
+
+---
+
 # Seed Quickstart
 
 > Basic Rust-only template for your new Seed app.
